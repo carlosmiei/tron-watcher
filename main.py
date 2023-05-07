@@ -18,7 +18,7 @@ ACCOUNT = 'YOUR TRON ACCOUNT' # ACCOUNT TO WATCH
 ### POLLING CONFIG ###
 POLL_INTERVAL = 5 # 5 minutes
 
-TRANSACTIONS_URL = f'https://api.trongrid.io/v1/accounts/{ACCOUNT}/transactions/trc20?limit=20&contract_address={CONTRACT}'
+TRANSACTIONS_URL = f'https://api.trongrid.io/v1/accounts/{ACCOUNT}/transactions/trc20?&contract_address={CONTRACT}'
 ACCOUNT_URL = f'https://apilist.tronscan.org/api/account?address={ACCOUNT}&includeToken=true'
 
 seen_transactions = set()
@@ -61,23 +61,23 @@ def create_send_email(tx):
     body = get_html_body(ACCOUNT, id, action, amount, datetime, link, other_key, other_account)
     send_email(subject, body)
 
-def handle_usdt_transactions():
+def handle_usdt_transactions(start_timestamp):
     while True:
         transactions = get_usdt_transactions()['data']
         current_time = time.time() * 1000
         for tx in transactions:
-            timestamp = tx['block_timestamp']
+            tx_timestamp = tx['block_timestamp']
             id = tx['transaction_id']
-            if True or id not in seen_transactions:
+            if id not in seen_transactions:
                 seen_transactions.add(id)
-                diff = current_time - timestamp
-                if True or diff < POLL_INTERVAL * 60 * 1000:
+                if tx_timestamp >= start_timestamp:
                     print('this is a new transaction, will send an email', timestamp, 'id', id)
                     create_send_email(tx)
         print('Will sleep for:', POLL_INTERVAL, 'minutes')
         time.sleep(POLL_INTERVAL * 60)
 
 def main():
-    handle_usdt_transactions()
+    timestamp = time.time() * 1000
+    handle_usdt_transactions(timestamp)
 
 main()
